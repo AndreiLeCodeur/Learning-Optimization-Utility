@@ -63,3 +63,7 @@ print(f"Mean cost: {network.meancost(test_data)}")
 - Python 3.8+
 - NumPy
 - Jupyter Notebook
+
+## License
+
+This project is licensed under the MIT License.
