@@ -5,12 +5,6 @@ This repository contains a simple implementation of a feedforward neural network
 ## Files
 
 - **`lou.py`**: Contains the `NeuralNetwork` class, which implements the neural network logic, including forward propagation, backpropagation, and training.
-- **`titanicdataset.ipynb`**: A Jupyter Notebook that preprocesses the Titanic dataset, trains the neural network, and generates predictions for submission.
-- **`titanic/`**: Contains the Titanic dataset files:
-  - `train.csv`: Training data.
-  - `test.csv`: Test data.
-  - `gender_submission.csv`: Example submission file.
-- **`submission.csv`**: The output file containing predictions for the test dataset.
 
 ## Neural Network Overview
 
@@ -39,24 +33,6 @@ The neural network is implemented in the `lou.py` file and includes the followin
 4. **`meancost(data)`**:
    - Computes the mean squared error cost for a given dataset.
 
-## Titanic Dataset Preprocessing
-
-The `titanicdataset.ipynb` notebook includes the following preprocessing steps:
-
-1. **Data Cleaning**:
-   - Dropping irrelevant columns (`Name`, `Ticket`, `Cabin`, `PassengerId`).
-   - Filling missing values in the `Age` column with the mean.
-   - Mapping categorical values (`Sex` and `Embarked`) to numerical values.
-   - Removing rows with any remaining missing values.
-
-2. **Normalization**:
-   - Normalizes numerical columns (`Age`, `Pclass`, `Parch`, `Fare`) to the range [0, 1] using a custom `normalizer` function.
-
-3. **Data Splitting**:
-   - Splits the dataset into training and testing sets.
-
-4. **Data Formatting**:
-   - Formats the data into the required input-output structure for the neural network.
 
 ## Usage
 
