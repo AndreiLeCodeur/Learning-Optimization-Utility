@@ -151,6 +151,31 @@ class NeuralNetwork:
             print("Export succesful")
             return True
         
+    def FeedTokens(self, Tokenizer, sentence):
+        '''
+        Provide a Tokenizer function, a reverse token function and a sentence to be tokenized.
+        It will tokenize the sentence then feed it in a loop in order to understand the entirety of it.
+        '''
+        t_sentence = Tokenizer(sentence)
+        input_size = self.Weights[0].shape[1]
+
+        res=[]
+
+        last_chunk_index = 0
+        for i in range(0, len(t_sentence)-input_size, input_size):
+            res.append(self.frontprop(np.array(t_sentence[i:i+input_size]))[-1].flatten().tolist())
+            last_chunk_index = i
+        #treats the last chunk
+        last_chunk = t_sentence[last_chunk_index:]
+        for j in range(len(t_sentence)-last_chunk_index):
+            last_chunk.append(0)
+        res.append(self.frontprop(np.array(last_chunk)[-1].reshape(input_size,1)).flatten().tolist())
+
+        
+
+        
+
+        return 0
 def ImportNetwork(path):
     '''
     Returns  Network with the weights and biases found in the path directory
