@@ -170,12 +170,9 @@ class NeuralNetwork:
         for j in range(len(t_sentence)-last_chunk_index):
             last_chunk.append(0)
         res.append(self.frontprop(np.array(last_chunk)[-1].reshape(input_size,1)).flatten().tolist())
+        return res
 
-        
-
-        
-
-        return 0
+        return res
 def ImportNetwork(path):
     '''
     Returns  Network with the weights and biases found in the path directory
