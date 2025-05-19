@@ -172,7 +172,6 @@ class NeuralNetwork:
         res.append(self.frontprop(np.array(last_chunk)[-1].reshape(input_size,1)).flatten().tolist())
         return res
 
-        return res
 def ImportNetwork(path):
     '''
     Returns  Network with the weights and biases found in the path directory
