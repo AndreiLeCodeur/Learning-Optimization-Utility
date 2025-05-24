@@ -66,7 +66,7 @@ class NeuralNetwork:
             output.append(sigmoid(self.Weights[i] @ output[i] + self.Biases[i]))
         return output
     
-    def train(self, data, alpha=0.01, tries=10000):
+    def train(self, data, alpha=0.01, tries=10000, batch=1):
         """
         Trains the neural network using the provided dataset through backpropagation.
         Args:
@@ -75,45 +75,39 @@ class NeuralNetwork:
                 - y: Expected output vector corresponding to the input.
             alpha (float, optional): The learning rate for gradient descent. Defaults to 0.01.
             tries (int, optional): The number of training iterations (epochs). Defaults to 10000.
-        Process:
-            - Performs forward propagation to compute the output of the network.
-            - Computes gradients for weights and biases using backpropagation.
-            - Updates weights and biases using gradient descent.
-        Notes:
-            - The network assumes sigmoid activation functions for all layers.
-            - Gradients are calculated layer by layer, starting from the output layer and moving backward.
-        Raises:
-            ValueError: If the dimensions of the input data, weights, or biases are inconsistent.
-        Returns:
-            None
+            batch (int, optional): The batch size for mini-batch gradient descent. Defaults to 1 (stochastic).
         """
+        n = len(data)
         for trial in range(tries):
-            for x, y in data:
-                out = self.frontprop(x)
-
-                # Temporary lists for gradients
-                dWs = [None] * len(self.Weights)
-                dBs = [None] * len(self.Biases)
-
-                # Backpropagation
-                for node in range(len(out) - 1, 0, -1):  # from output to first hidden
-                    if node == len(out) - 1:
-                        # Output layer
-                        dZ = (out[node] - y) * out[node] * (1 - out[node])
-                    else:
-                        # Hidden layers
-                        dZ = (self.Weights[node].T @ dZ) * out[node] * (1 - out[node])
-
-                    dW = dZ @ out[node - 1].T
-                    dB = dZ
-
-                    dWs[node - 1] = dW
-                    dBs[node - 1] = dB
-
-                # Gradient step
+            #np.random.shuffle(data)
+            for batch_start in range(0, n, batch):
+                batch_data = data[batch_start:batch_start+batch]
+                # Initialize gradients
+                dWs = [np.zeros_like(w) for w in self.Weights]
+                dBs = [np.zeros_like(b) for b in self.Biases]
+                for x, y in batch_data:
+                    out = self.frontprop(x)
+                    # Temporary lists for gradients for this sample
+                    sample_dWs = [None] * len(self.Weights)
+                    sample_dBs = [None] * len(self.Biases)
+                    # Backpropagation
+                    for node in range(len(out) - 1, 0, -1):  # from output to first hidden
+                        if node == len(out) - 1:
+                            dZ = (out[node] - y) * out[node] * (1 - out[node])
+                        else:
+                            dZ = (self.Weights[node].T @ dZ) * out[node] * (1 - out[node])
+                        dW = dZ @ out[node - 1].T
+                        dB = dZ
+                        sample_dWs[node - 1] = dW
+                        sample_dBs[node - 1] = dB
+                    # Accumulate gradients
+                    for i in range(len(self.Weights)):
+                        dWs[i] += sample_dWs[i]
+                        dBs[i] += sample_dBs[i]
+                # Update weights and biases with average gradient for the batch
                 for i in range(len(self.Weights)):
-                    self.Weights[i] -= alpha * dWs[i]
-                    self.Biases[i] -= alpha * dBs[i]
+                    self.Weights[i] -= alpha * dWs[i] / batch
+                    self.Biases[i] -= alpha * dBs[i] / batch
 
     def meancost(self, data):
         """
@@ -150,6 +144,39 @@ class NeuralNetwork:
             print("Export succesful")
             return True
         
+    def FeedTokens(self, Tokenizer, sentence):
+        """
+        Tokenize `sentence` (a list of ints) into chunks of size input_size,
+        pad the final chunk to full length, run each chunk through frontprop,
+        and collect the outputs.
+        """
+        t_sentence = Tokenizer(sentence)
+        input_size = self.Weights[0].shape[1]
+
+        res = []
+        last_chunk_index = 0
+
+        # Process full chunks
+        for i in range(0, len(t_sentence) - input_size + 1, input_size):
+            chunk = t_sentence[i : i + input_size]
+            # reshape to (input_size, 1)
+            col = np.array(chunk).reshape(input_size, 1)
+            out = self.frontprop(col)[-1].flatten().tolist()
+            res.append(out)
+            last_chunk_index = i + input_size
+
+        # Process the final (possibly partial) chunk
+        if last_chunk_index < len(t_sentence):
+            last_chunk = t_sentence[last_chunk_index:]
+            # pad with zeros up to input_size
+            pad_len = input_size - len(last_chunk)
+            last_chunk = last_chunk + [0] * pad_len
+
+            col = np.array(last_chunk).reshape(input_size, 1)
+            out = self.frontprop(col)[-1].flatten().tolist()
+            res.append(out)
+        return res
+
 def ImportNetwork(path):
     '''
     Returns  Network with the weights and biases found in the path directory
@@ -161,5 +188,4 @@ def ImportNetwork(path):
     Biases = [Biases[f] for f in Biases]
 
     return NeuralNetwork(Weights=Weights, Biases=Biases)
-    
-    
+

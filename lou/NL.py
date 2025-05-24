@@ -152,24 +152,36 @@ class NeuralNetwork:
             return True
         
     def FeedTokens(self, Tokenizer, sentence):
-        '''
-        Provide a Tokenizer function, a reverse token function and a sentence to be tokenized.
-        It will tokenize the sentence then feed it in a loop in order to understand the entirety of it.
-        '''
+        """
+        Tokenize `sentence` (a list of ints) into chunks of size input_size,
+        pad the final chunk to full length, run each chunk through frontprop,
+        and collect the outputs.
+        """
         t_sentence = Tokenizer(sentence)
         input_size = self.Weights[0].shape[1]
 
-        res=[]
-
+        res = []
         last_chunk_index = 0
-        for i in range(0, len(t_sentence)-input_size, input_size):
-            res.append(self.frontprop(np.array(t_sentence[i:i+input_size]))[-1].flatten().tolist())
-            last_chunk_index = i
-        #treats the last chunk
-        last_chunk = t_sentence[last_chunk_index:]
-        for j in range(len(t_sentence)-last_chunk_index):
-            last_chunk.append(0)
-        res.append(self.frontprop(np.array(last_chunk)[-1].reshape(input_size,1)).flatten().tolist())
+
+        # Process full chunks
+        for i in range(0, len(t_sentence) - input_size + 1, input_size):
+            chunk = t_sentence[i : i + input_size]
+            # reshape to (input_size, 1)
+            col = np.array(chunk).reshape(input_size, 1)
+            out = self.frontprop(col)[-1].flatten().tolist()
+            res.append(out)
+            last_chunk_index = i + input_size
+
+        # Process the final (possibly partial) chunk
+        if last_chunk_index < len(t_sentence):
+            last_chunk = t_sentence[last_chunk_index:]
+            # pad with zeros up to input_size
+            pad_len = input_size - len(last_chunk)
+            last_chunk = last_chunk + [0] * pad_len
+
+            col = np.array(last_chunk).reshape(input_size, 1)
+            out = self.frontprop(col)[-1].flatten().tolist()
+            res.append(out)
         return res
 
 def ImportNetwork(path):
@@ -183,5 +195,4 @@ def ImportNetwork(path):
     Biases = [Biases[f] for f in Biases]
 
     return NeuralNetwork(Weights=Weights, Biases=Biases)
-    
-    
+
