@@ -45,18 +45,7 @@ The neural network is implemented in the `lou.py` file and includes the followin
 
 ## Example
 
-```python
-from lou import NeuralNetwork
-
-# Define the network structure
-network = NeuralNetwork([7, 10, 1])
-
-# Train the network
-network.train(train_data, alpha=0.01, tries=1000)
-
-# Evaluate the network
-print(f"Mean cost: {network.meancost(test_data)}")
-```
+You can find an example of how to use this library in usage_example
 
 ## Requirements
 
