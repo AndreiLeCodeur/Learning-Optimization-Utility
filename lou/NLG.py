@@ -66,7 +66,7 @@ class NeuralNetwork:
             output.append(sigmoid(self.Weights[i] @ output[i] + self.Biases[i]))
         return output
     
-    def train(self, data, alpha=0.01, tries=10000, batch=1):
+    def train(self, data, alpha=0.01, tries=10000, batch=1, verbose=0):
         """
         Trains the neural network using the provided dataset through backpropagation.
         Args:
@@ -79,6 +79,10 @@ class NeuralNetwork:
         """
         n = len(data)
         for trial in range(tries):
+
+            if trial % verbose == 0 and verbose != 0 :
+                print(f"Loop number {trial}")
+
             #np.random.shuffle(data)
             for batch_start in range(0, n, batch):
                 batch_data = data[batch_start:batch_start+batch]

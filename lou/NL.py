@@ -66,7 +66,7 @@ class NeuralNetwork:
             output.append(sigmoid(self.Weights[i] @ output[i] + self.Biases[i]))
         return output
     
-    def train(self, data, alpha=0.01, tries=10000):
+    def train(self, data, alpha=0.01, tries=10000, verbose=0):
         """
         Trains the neural network using the provided dataset through backpropagation.
         Args:
@@ -88,6 +88,9 @@ class NeuralNetwork:
             None
         """
         for trial in range(tries):
+
+            if trial % verbose == 0 and verbose != 0 :
+                print(f"Loop number {trial}")
 
             for x, y in data:
                 out = self.frontprop(x)
