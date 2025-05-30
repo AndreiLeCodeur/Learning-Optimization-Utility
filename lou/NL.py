@@ -89,7 +89,7 @@ class NeuralNetwork:
         """
         for trial in range(tries):
 
-            if trial % verbose == 0 and verbose != 0 :
+            if verbose != 0 and trial % verbose == 0:
                 print(f"Loop number {trial}")
 
             for x, y in data:
@@ -184,6 +184,142 @@ class NeuralNetwork:
 
             col = np.array(last_chunk).reshape(input_size, 1)
             out = self.frontprop(col)[-1].flatten().tolist()
+            res.append(out)
+        return res
+    
+class General_Network:
+    '''Works the same way but you must create the activation function f and its derivative df'''
+
+    def __init__(self, f, df, struct=None, Weights=None, Biases=None):
+        '''
+        struct is a list of integers symbolizing the size of each layer 
+        '''
+        self.f = f
+        self.df = df
+
+        if not Weights and not Biases:
+            self.Biases, self.Weights = [], []
+            for i in range(1, len(struct)):
+                self.Weights.append(np.random.rand(struct[i],struct[i-1]))
+                self.Biases.append(np.random.rand(struct[i],1))
+            self.length = len(struct)
+        else:
+            self.Weights = Weights
+            self.Biases = Biases
+            self.length = len(Weights)+1
+
+    def frontprop(self, A0):
+        '''
+        A0 : input, numpy array of dimension (struct[0],1)
+        output : each layer and the last ... in a list (contains the input)
+        '''
+        output = [(None, A0.reshape(-1,1))]
+        for i in range(self.length-1):
+            tmp = self.Weights[i] @ output[i][1] + self.Biases[i]
+            output.append((tmp,self.f(tmp)))
+        return output
+    
+    def train(self, data, alpha=0.01, tries=10000, verbose=0):
+
+        for trial in range(tries):
+
+            if verbose != 0 and trial % verbose == 0 :
+                print(f"Loop number {trial}")
+
+            for x, y in data:
+                out = self.frontprop(x)
+
+                # Temporary lists for gradients
+                dWs = [None] * len(self.Weights)
+                dBs = [None] * len(self.Biases)
+
+                # Backpropagation
+                for node in range(len(out) - 1, 0, -1):  # from output to first hidden
+
+                    if node == len(out) - 1:
+                        # Output layer
+                        dZ = (out[node][1] - y) * self.df(out[node][0])
+                    else:
+                        # Hidden layers
+                        dZ = (self.Weights[node].T @ dZ) * self.df(out[node][0])
+
+                    dW = dZ @ out[node - 1][1].T
+
+                    dB = dZ
+
+                    dWs[node - 1] = dW
+                    dBs[node - 1] = dB
+
+                # Gradient step
+                for i in range(len(self.Weights)):
+                    self.Weights[i] -= alpha * dWs[i]
+                    self.Biases[i] -= alpha * dBs[i]
+
+    def meancost(self, data):
+        """
+        Calculate the mean cost (average loss) for a given dataset.
+
+        This method computes the mean squared error cost for the provided dataset.
+        Each data point in the dataset is processed through the network's forward
+        propagation, and the squared difference between the predicted output and
+        the actual target is calculated and accumulated. The final cost is averaged
+        over the total number of data points.
+
+        Args:
+            data (list of tuples): A list where each element is a tuple (input, target).
+                - input: The input data for the neural network (e.g., numpy array).
+                - target: The expected output corresponding to the input (e.g., numpy array).
+
+        Returns:
+            float: The mean cost (average loss) for the dataset.
+        """
+        totalcost = 0
+        for line in data:
+            totalcost += np.sum(((self.frontprop(line[0])[-1][1]-line[1])**2))/2
+        return totalcost/len(data)
+    
+    def export(self, path):
+        if not os.path.exists(path):
+                os.makedirs(path, exist_ok=True)
+        if not os.path.isdir(path):
+            print("Please provide a directory in which your model (and only model) will be stored.")
+            return False
+        else:
+            np.savez(f'{path}/weights.npz', *self.Weights)
+            np.savez(f'{path}/biases.npz', *self.Biases)
+            print("Export succesful")
+            return True
+        
+    def FeedTokens(self, Tokenizer, sentence):
+        """
+        Tokenize `sentence` (a list of ints) into chunks of size input_size,
+        pad the final chunk to full length, run each chunk through frontprop,
+        and collect the outputs.
+        """
+        t_sentence = Tokenizer(sentence)
+        input_size = self.Weights[0].shape[1]
+
+        res = []
+        last_chunk_index = 0
+
+        # Process full chunks
+        for i in range(0, len(t_sentence) - input_size + 1, input_size):
+            chunk = t_sentence[i : i + input_size]
+            # reshape to (input_size, 1)
+            col = np.array(chunk).reshape(input_size, 1)
+            out = self.frontprop(col)[-1][1].flatten().tolist()
+            res.append(out)
+            last_chunk_index = i + input_size
+
+        # Process the final (possibly partial) chunk
+        if last_chunk_index < len(t_sentence):
+            last_chunk = t_sentence[last_chunk_index:]
+            # pad with zeros up to input_size
+            pad_len = input_size - len(last_chunk)
+            last_chunk = last_chunk + [0] * pad_len
+
+            col = np.array(last_chunk).reshape(input_size, 1)
+            out = self.frontprop(col)[-1][1].flatten().tolist()
             res.append(out)
         return res
 

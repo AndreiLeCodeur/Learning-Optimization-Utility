@@ -33,15 +33,11 @@ The neural network is implemented in the `lou.py` file and includes the followin
 4. **`meancost(data)`**:
    - Computes the mean squared error cost for a given dataset.
 
+## General Neural Network :
 
-## Usage
-
-1. **Train the Neural Network**:
-   - Run the `titanicdataset.ipynb` notebook to preprocess the data and train the neural network.
-
-2. **Generate Predictions**:
-   - Use the trained network to generate predictions for the test dataset.
-   - Save the predictions in `submission.csv` for submission.
+This class allows the user to create a neural network with any activation function. 
+Because of the general use case of this class the math cannot be optimized for performance.
+If you wish for a more performant network use the NeuralNetwork class which has the sigmoid function hard coded in.
 
 ## Example
 
